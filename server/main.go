@@ -9,6 +9,8 @@ import (
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/coder/websocket"
 )
 
 func main() {
@@ -33,7 +35,8 @@ func run() error {
 
 	s := &http.Server{
 		Handler: echoServer{
-			logf: log.Printf,
+			logf:    log.Printf,
+			clients: make(map[*websocket.Conn]struct{}),
 		},
 		ReadTimeout:  time.Second * 10,
 		WriteTimeout: time.Second * 10,

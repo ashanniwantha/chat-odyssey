@@ -33,6 +33,16 @@ func (s echoServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.mu.Lock()
+	s.clients[c] = struct{}{}
+	s.mu.Unlock()
+
+	defer func() {
+		s.mu.Lock()
+		delete(s.clients, c)
+		s.mu.Unlock()
+	}()
+
 	l := rate.NewLimiter(rate.Every(time.Millisecond*100), 10)
 	for {
 		err := echo(c, l)
@@ -73,4 +83,42 @@ func echo(c *websocket.Conn, l *rate.Limiter) error {
 
 	err = w.Close()
 	return err
+}
+
+func (s echoServer) broadcastLoop(ctx context.Context, c *websocket.Conn, l *rate.Limiter) error {
+	for {
+		if err := l.Wait(ctx); err != nil {
+			return err
+		}
+
+		typ, r, err := c.Reader(ctx)
+		if err != nil {
+			return err
+		}
+
+		msg, err := io.ReadAll(r)
+		if err != nil {
+			return err
+		}
+
+		s.broadcast(ctx, typ, msg)
+	}
+}
+
+func (s echoServer) broadcast(ctx context.Context, typ websocket.MessageType, msg []byte) {
+	s.mu.Lock()
+	clients := make([]*websocket.Conn, 0, len(s.clients))
+	for client := range s.clients {
+		clients = append(clients, client)
+	}
+	s.mu.Unlock()
+
+	for _, client := range clients {
+		if err := client.Write(ctx, typ, msg); err != nil {
+			s.logf("broadcast write failed: %v", err)
+			s.mu.Lock()
+			delete(s.clients, client)
+			s.mu.Unlock()
+		}
+	}
 }
