@@ -44,8 +44,9 @@ func (s echoServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	l := rate.NewLimiter(rate.Every(time.Millisecond*100), 10)
+	ctx := r.Context()
 	for {
-		err := echo(c, l)
+		err := s.broadcastLoop(ctx, c, l)
 		if websocket.CloseStatus(err) == websocket.StatusNormalClosure {
 			return
 		}
