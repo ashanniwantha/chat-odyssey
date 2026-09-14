@@ -17,6 +17,8 @@ func main() {
 		log.Fatal("usage: client <ws-url>")
 	}
 
+	fmt.Printf("Client connected: %s", os.Args[2])
+
 	ctx := context.Background()
 	c, _, err := websocket.Dial(ctx, os.Args[1], &websocket.DialOptions{
 		Subprotocols: []string{"echo"},
@@ -36,7 +38,7 @@ func main() {
 				log.Printf("read closed: %v", err)
 				return
 			}
-			fmt.Printf("received: %s\n", msg)
+			fmt.Printf("[%s] received: %s\n", msg, os.Args[2])
 		}
 	}()
 
@@ -47,12 +49,14 @@ func main() {
 			line := scanner.Text()
 			if err := c.Write(ctx, websocket.MessageText, []byte(line)); err != nil {
 				log.Fatal(err)
+				return
 			}
 		}
 
 		// Check for scanning errors after terminating the loop
 		if err := scanner.Err(); err != nil {
 			log.Fatalf("error reading standard input: %v", err)
+			return
 		}
 	}()
 

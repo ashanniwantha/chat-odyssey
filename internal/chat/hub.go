@@ -21,7 +21,7 @@ func NewHub() *Hub {
 }
 
 // only goroutine that touch h.clients
-func (h *Hub) run() {
+func (h *Hub) Run() {
 	for {
 		select {
 		case c := <-h.register:
@@ -45,3 +45,7 @@ func (h *Hub) run() {
 		}
 	}
 }
+
+func (h *Hub) Register(c *Client)   { h.register <- c }
+func (h *Hub) Unregister(c *Client) { h.unregister <- c }
+func (h *Hub) Broadcast(msg []byte) { h.broadcast <- msg }

@@ -10,7 +10,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/coder/websocket"
+	"github.com/ashanniwantha/chat-odyssey/internal/chat"
 )
 
 func main() {
@@ -33,11 +33,11 @@ func run() error {
 	}
 	log.Printf("listening on ws://%v", l.Addr())
 
+	hub := chat.NewHub()
+	go hub.Run()
+
 	s := &http.Server{
-		Handler: echoServer{
-			logf:    log.Printf,
-			clients: make(map[*websocket.Conn]struct{}),
-		},
+		Handler:      chat.NewServer(hub, log.Printf),
 		ReadTimeout:  time.Second * 10,
 		WriteTimeout: time.Second * 10,
 	}
