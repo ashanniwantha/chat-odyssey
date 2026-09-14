@@ -17,7 +17,7 @@ func main() {
 		log.Fatal("usage: client <ws-url>")
 	}
 
-	fmt.Printf("Client connected: %s", os.Args[2])
+	fmt.Printf("Client connected: %s\n", os.Args[2])
 
 	ctx := context.Background()
 	c, _, err := websocket.Dial(ctx, os.Args[1], &websocket.DialOptions{

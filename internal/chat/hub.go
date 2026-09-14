@@ -1,14 +1,21 @@
 package chat
 
 import (
+	"fmt"
+
 	"github.com/coder/websocket"
 )
+
+type BroadcastMessage struct {
+	Sender  *Client
+	Content []byte
+}
 
 type Hub struct {
 	clients    map[*Client]struct{}
 	register   chan *Client
 	unregister chan *Client
-	broadcast  chan []byte
+	broadcast  chan BroadcastMessage
 }
 
 func NewHub() *Hub {
@@ -16,7 +23,7 @@ func NewHub() *Hub {
 		clients:    make(map[*Client]struct{}),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
-		broadcast:  make(chan []byte),
+		broadcast:  make(chan BroadcastMessage),
 	}
 }
 
@@ -32,9 +39,16 @@ func (h *Hub) Run() {
 				close(c.send)
 			}
 		case msg := <-h.broadcast:
+			formattedMsg := fmt.Appendf(nil, "%p: %s", msg.Sender, msg.Content)
+
 			for c := range h.clients {
+				// prevent the message being sent to the sender
+				if c == msg.Sender {
+					continue
+				}
+
 				select {
-				case c.send <- msg:
+				case c.send <- formattedMsg:
 				default:
 					// send buffer full -> client is slow
 					close(c.send)
@@ -46,6 +60,6 @@ func (h *Hub) Run() {
 	}
 }
 
-func (h *Hub) Register(c *Client)   { h.register <- c }
-func (h *Hub) Unregister(c *Client) { h.unregister <- c }
-func (h *Hub) Broadcast(msg []byte) { h.broadcast <- msg }
+func (h *Hub) Register(c *Client)             { h.register <- c }
+func (h *Hub) Unregister(c *Client)           { h.unregister <- c }
+func (h *Hub) Broadcast(msg BroadcastMessage) { h.broadcast <- msg }

@@ -60,6 +60,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		s.hub.Broadcast(msg)
+		bMsg := BroadcastMessage{
+			Sender:  cl,
+			Content: msg,
+		}
+
+		s.hub.Broadcast(bMsg)
 	}
 }
