@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"time"
@@ -60,9 +61,16 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Validation: Unmarshal the incoming structure to ensure it's valid JSON
+		var incoming WSMessage
+		if err := json.Unmarshal(msg, &incoming); err != nil {
+			s.logf("invalid JSON payload received: %v", err)
+			continue
+		}
+
 		bMsg := BroadcastMessage{
 			Sender:  cl,
-			Content: msg,
+			Content: []byte(incoming.Content),
 		}
 
 		s.hub.Broadcast(bMsg)

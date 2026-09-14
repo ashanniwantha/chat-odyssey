@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/coder/websocket"
@@ -39,7 +40,15 @@ func (h *Hub) Run() {
 				close(c.send)
 			}
 		case msg := <-h.broadcast:
-			formattedMsg := fmt.Appendf(nil, "%p: %s", msg.Sender, msg.Content)
+			outboundPayload := WSMessage{
+				SenderID: fmt.Sprintf("%p", msg.Sender),
+				Content:  string(msg.Content),
+			}
+
+			formattedMsg, err := json.Marshal(outboundPayload)
+			if err != nil {
+				continue // Skip bad payload
+			}
 
 			for c := range h.clients {
 				// prevent the message being sent to the sender
