@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+option go_package = "chat-odyssey/internal/chatpb";
+
+package = chat;
+
+message WSMessage {
+    string sender_id = 1;
+    string content = 2;
+}
