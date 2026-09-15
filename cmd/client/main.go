@@ -3,12 +3,13 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 
+	"github.com/ashanniwantha/chat-odyssey/internal/chatpb"
 	"github.com/coder/websocket"
+	"google.golang.org/protobuf/proto"
 )
 
 type WSMessage struct {
@@ -48,13 +49,13 @@ func main() {
 				return
 			}
 
-			var inbound WSMessage
-			if err := json.Unmarshal(msg, &inbound); err != nil {
+			var inbound chatpb.WSMessage
+			if err := proto.Unmarshal(msg, &inbound); err != nil {
 				log.Printf("[%s] Raw output received: %s", username, string(msg))
 				continue
 			}
 
-			fmt.Printf("\n[%s] %s: %s\n>", username, inbound.SenderID, inbound.Content)
+			fmt.Printf("\n[%s] %s: %s\n>", username, inbound.GetSenderId(), inbound.GetContent())
 		}
 	}()
 
@@ -69,18 +70,18 @@ func main() {
 			}
 
 			// Package the content to our payload structure
-			payload := WSMessage{
+			payload := &chatpb.WSMessage{
 				Content: line,
 			}
 
-			// Marshall the payload into binary JSON data
-			jsonBytes, err := json.Marshal(payload)
+			// Marshall the payload into binary proto data
+			protoBytes, err := proto.Marshal(payload)
 			if err != nil {
 				log.Printf("failed to marshal JSON payload: %v", err)
 				continue
 			}
 
-			if err := c.Write(ctx, websocket.MessageText, jsonBytes); err != nil {
+			if err := c.Write(ctx, websocket.MessageText, protoBytes); err != nil {
 				log.Fatal(err)
 				return
 			}

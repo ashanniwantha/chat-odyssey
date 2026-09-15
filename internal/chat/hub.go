@@ -1,10 +1,11 @@
 package chat
 
 import (
-	"encoding/json"
 	"fmt"
 
+	"github.com/ashanniwantha/chat-odyssey/internal/chatpb"
 	"github.com/coder/websocket"
+	"google.golang.org/protobuf/proto"
 )
 
 type BroadcastMessage struct {
@@ -40,12 +41,12 @@ func (h *Hub) Run() {
 				close(c.send)
 			}
 		case msg := <-h.broadcast:
-			outboundPayload := WSMessage{
-				SenderID: fmt.Sprintf("%p", msg.Sender),
+			outboundPayload := &chatpb.WSMessage{
+				SenderId: fmt.Sprintf("%p", msg.Sender),
 				Content:  string(msg.Content),
 			}
 
-			formattedMsg, err := json.Marshal(outboundPayload)
+			formattedMsg, err := proto.Marshal(outboundPayload)
 			if err != nil {
 				continue // Skip bad payload
 			}

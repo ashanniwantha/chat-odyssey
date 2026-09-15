@@ -1,13 +1,14 @@
 package chat
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
 	"time"
 
+	"github.com/ashanniwantha/chat-odyssey/internal/chatpb"
 	"github.com/coder/websocket"
 	"golang.org/x/time/rate"
+	"google.golang.org/protobuf/proto"
 )
 
 type Server struct {
@@ -62,8 +63,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Validation: Unmarshal the incoming structure to ensure it's valid JSON
-		var incoming WSMessage
-		if err := json.Unmarshal(msg, &incoming); err != nil {
+		var incoming chatpb.WSMessage
+		if err := proto.Unmarshal(msg, &incoming); err != nil {
 			s.logf("invalid JSON payload received: %v", err)
 			continue
 		}
