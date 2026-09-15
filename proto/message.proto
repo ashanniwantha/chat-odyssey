@@ -1,10 +1,17 @@
 syntax = "proto3";
 
-option go_package = "/internal/chatpb";
+option go_package = "internal/chatpb";
 
 package chat;
 
-message WSMessage {
-    string sender_id = 1;
-    string content = 2;
+// 1. Client to Server 
+message MessageUpload {
+  string content = 1;
+}
+
+// 2. Server to Clients
+message MessageBroadcast {
+  string sender_id = 1; // The immutable backend unique ID
+  string sender_name = 2; // The human-readable display name
+  string content     = 3; // The actual chat message
 }

@@ -34,7 +34,11 @@ func run() error {
 	log.Printf("listening on ws://%v", l.Addr())
 
 	hub := chat.NewHub()
-	go hub.Run()
+
+	// Create a cancelable background context to control hub
+	ctx, cancelApp := context.WithCancel(context.Background())
+	defer cancelApp()
+	go hub.Run(ctx)
 
 	s := &http.Server{
 		Handler:      chat.NewServer(hub, log.Printf),
@@ -55,8 +59,9 @@ func run() error {
 		log.Printf("terminating: %v", sig)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
+	cancelApp()
+	ctxShut, cancelShut := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancelShut()
 
-	return s.Shutdown(ctx)
+	return s.Shutdown(ctxShut)
 }

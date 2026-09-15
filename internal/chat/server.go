@@ -7,6 +7,7 @@ import (
 
 	"github.com/ashanniwantha/chat-odyssey/internal/chatpb"
 	"github.com/coder/websocket"
+	"github.com/google/uuid"
 	"golang.org/x/time/rate"
 	"google.golang.org/protobuf/proto"
 )
@@ -29,14 +30,22 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		s.logf("failed to intialize websocket: %v", err)
+		return
 	}
 	defer c.CloseNow()
 
 	if c.Subprotocol() != "echo" {
 		c.Close(websocket.StatusPolicyViolation, "client must speak echo subprotocol")
+		return
 	}
 
-	cl := NewClient(c)
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		c.Close(websocket.StatusPolicyViolation, "name of the user must be included")
+		return
+	}
+
+	cl := NewClient(c, name, uuid.NewString())
 	s.hub.Register(cl)
 	defer s.hub.Unregister(cl)
 
@@ -63,9 +72,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Validation: Unmarshal the incoming structure to ensure it's valid JSON
-		var incoming chatpb.WSMessage
+		var incoming chatpb.MessageUpload
 		if err := proto.Unmarshal(msg, &incoming); err != nil {
-			s.logf("invalid JSON payload received: %v", err)
+			s.logf("invalid Protobuf message received: %v", err)
 			continue
 		}
 

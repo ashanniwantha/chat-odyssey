@@ -8,12 +8,16 @@ import (
 
 type Client struct {
 	conn *websocket.Conn
+	id   string
+	name string
 	send chan []byte
 }
 
-func NewClient(c *websocket.Conn) *Client {
+func NewClient(c *websocket.Conn, id string, name string) *Client {
 	return &Client{
 		conn: c,
+		id:   id,
+		name: name,
 		send: make(chan []byte, 32),
 	}
 }

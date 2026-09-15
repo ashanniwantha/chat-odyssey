@@ -12,11 +12,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type WSMessage struct {
-	SenderID string `json:"sender_id,omitempty"`
-	Content  string `json:"content"`
-}
-
 func main() {
 	log.SetFlags(0)
 
@@ -30,7 +25,7 @@ func main() {
 	fmt.Printf("Client connected: %s\n", username)
 
 	ctx := context.Background()
-	c, _, err := websocket.Dial(ctx, url, &websocket.DialOptions{
+	c, _, err := websocket.Dial(ctx, url+"?name="+username, &websocket.DialOptions{
 		Subprotocols: []string{"echo"},
 	})
 	if err != nil {
@@ -49,7 +44,7 @@ func main() {
 				return
 			}
 
-			var inbound chatpb.WSMessage
+			var inbound chatpb.MessageBroadcast
 			if err := proto.Unmarshal(msg, &inbound); err != nil {
 				log.Printf("[%s] Raw output received: %s", username, string(msg))
 				continue
@@ -70,19 +65,19 @@ func main() {
 			}
 
 			// Package the content to our payload structure
-			payload := &chatpb.WSMessage{
+			payload := &chatpb.MessageUpload{
 				Content: line,
 			}
 
 			// Marshall the payload into binary proto data
 			protoBytes, err := proto.Marshal(payload)
 			if err != nil {
-				log.Printf("failed to marshal JSON payload: %v", err)
+				log.Printf("failed to marshal Protobuf message: %v", err)
 				continue
 			}
 
 			if err := c.Write(ctx, websocket.MessageText, protoBytes); err != nil {
-				log.Fatal(err)
+				log.Print(err)
 				return
 			}
 			fmt.Print("> ")

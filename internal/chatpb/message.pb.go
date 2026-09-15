@@ -7,12 +7,11 @@
 package chatpb
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -22,28 +21,28 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type WSMessage struct {
+// 1. Client to Server
+type MessageUpload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SenderId      string                 `protobuf:"bytes,1,opt,name=sender_id,json=senderId,proto3" json:"sender_id,omitempty"`
-	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	Content       string                 `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *WSMessage) Reset() {
-	*x = WSMessage{}
+func (x *MessageUpload) Reset() {
+	*x = MessageUpload{}
 	mi := &file_proto_message_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *WSMessage) String() string {
+func (x *MessageUpload) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*WSMessage) ProtoMessage() {}
+func (*MessageUpload) ProtoMessage() {}
 
-func (x *WSMessage) ProtoReflect() protoreflect.Message {
+func (x *MessageUpload) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_message_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -55,19 +54,73 @@ func (x *WSMessage) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use WSMessage.ProtoReflect.Descriptor instead.
-func (*WSMessage) Descriptor() ([]byte, []int) {
+// Deprecated: Use MessageUpload.ProtoReflect.Descriptor instead.
+func (*MessageUpload) Descriptor() ([]byte, []int) {
 	return file_proto_message_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *WSMessage) GetSenderId() string {
+func (x *MessageUpload) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+// 2. Server to Clients
+type MessageBroadcast struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SenderId      string                 `protobuf:"bytes,1,opt,name=sender_id,json=senderId,proto3" json:"sender_id,omitempty"`       // The immutable backend unique ID
+	SenderName    string                 `protobuf:"bytes,2,opt,name=sender_name,json=senderName,proto3" json:"sender_name,omitempty"` // The human-readable display name
+	Content       string                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`                         // The actual chat message
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MessageBroadcast) Reset() {
+	*x = MessageBroadcast{}
+	mi := &file_proto_message_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MessageBroadcast) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MessageBroadcast) ProtoMessage() {}
+
+func (x *MessageBroadcast) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_message_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MessageBroadcast.ProtoReflect.Descriptor instead.
+func (*MessageBroadcast) Descriptor() ([]byte, []int) {
+	return file_proto_message_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *MessageBroadcast) GetSenderId() string {
 	if x != nil {
 		return x.SenderId
 	}
 	return ""
 }
 
-func (x *WSMessage) GetContent() string {
+func (x *MessageBroadcast) GetSenderName() string {
+	if x != nil {
+		return x.SenderName
+	}
+	return ""
+}
+
+func (x *MessageBroadcast) GetContent() string {
 	if x != nil {
 		return x.Content
 	}
@@ -78,10 +131,14 @@ var File_proto_message_proto protoreflect.FileDescriptor
 
 const file_proto_message_proto_rawDesc = "" +
 	"\n" +
-	"\x13proto/message.proto\x12\x04chat\"B\n" +
-	"\tWSMessage\x12\x1b\n" +
-	"\tsender_id\x18\x01 \x01(\tR\bsenderId\x12\x18\n" +
-	"\acontent\x18\x02 \x01(\tR\acontentB\x12Z\x10/internal/chatpbb\x06proto3"
+	"\x13proto/message.proto\x12\x04chat\")\n" +
+	"\rMessageUpload\x12\x18\n" +
+	"\acontent\x18\x01 \x01(\tR\acontent\"j\n" +
+	"\x10MessageBroadcast\x12\x1b\n" +
+	"\tsender_id\x18\x01 \x01(\tR\bsenderId\x12\x1f\n" +
+	"\vsender_name\x18\x02 \x01(\tR\n" +
+	"senderName\x12\x18\n" +
+	"\acontent\x18\x03 \x01(\tR\acontentB\x11Z\x0finternal/chatpbb\x06proto3"
 
 var (
 	file_proto_message_proto_rawDescOnce sync.Once
@@ -95,9 +152,10 @@ func file_proto_message_proto_rawDescGZIP() []byte {
 	return file_proto_message_proto_rawDescData
 }
 
-var file_proto_message_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_proto_message_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_proto_message_proto_goTypes = []any{
-	(*WSMessage)(nil), // 0: chat.WSMessage
+	(*MessageUpload)(nil),    // 0: chat.MessageUpload
+	(*MessageBroadcast)(nil), // 1: chat.MessageBroadcast
 }
 var file_proto_message_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -118,7 +176,7 @@ func file_proto_message_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_message_proto_rawDesc), len(file_proto_message_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

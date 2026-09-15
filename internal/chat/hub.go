@@ -1,7 +1,7 @@
 package chat
 
 import (
-	"fmt"
+	"context"
 
 	"github.com/ashanniwantha/chat-odyssey/internal/chatpb"
 	"github.com/coder/websocket"
@@ -30,20 +30,31 @@ func NewHub() *Hub {
 }
 
 // only goroutine that touch h.clients
-func (h *Hub) Run() {
+func (h *Hub) Run(ctx context.Context) {
 	for {
 		select {
+		case <-ctx.Done():
+			for c := range h.clients {
+				close(c.send)
+				delete(h.clients, c)
+				c.conn.Close(websocket.StatusGoingAway, "server shutting down")
+			}
+			return
+
 		case c := <-h.register:
 			h.clients[c] = struct{}{}
+
 		case c := <-h.unregister:
 			if _, ok := h.clients[c]; ok {
 				delete(h.clients, c)
 				close(c.send)
 			}
+
 		case msg := <-h.broadcast:
-			outboundPayload := &chatpb.WSMessage{
-				SenderId: fmt.Sprintf("%p", msg.Sender),
-				Content:  string(msg.Content),
+			outboundPayload := &chatpb.MessageBroadcast{
+				SenderId:   msg.Sender.id,
+				SenderName: msg.Sender.name,
+				Content:    string(msg.Content),
 			}
 
 			formattedMsg, err := proto.Marshal(outboundPayload)
