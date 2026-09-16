@@ -42,6 +42,13 @@ func (h *Hub) Run(ctx context.Context) {
 		case c := <-h.register:
 			h.clients[c] = struct{}{}
 
+			// Show the message history
+			pastMessages := h.history.GetAll()
+			// Loop through the messages in chronological order
+			for _, oldMsg := range pastMessages {
+				c.send <- oldMsg
+			}
+
 		case c := <-h.unregister:
 			if _, ok := h.clients[c]; ok {
 				delete(h.clients, c)
