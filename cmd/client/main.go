@@ -50,7 +50,7 @@ func main() {
 				continue
 			}
 
-			fmt.Printf("\n[%s] %s: %s\n>", username, inbound.GetSenderId(), inbound.GetContent())
+			fmt.Printf("\n[%s] %s: %s\n>", inbound.GetSenderId(), inbound.GetSenderName(), inbound.GetContent())
 		}
 	}()
 

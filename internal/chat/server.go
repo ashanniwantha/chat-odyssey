@@ -45,7 +45,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cl := NewClient(c, name, uuid.NewString())
+	cl := NewClient(c, uuid.NewString(), name)
 	s.hub.Register(cl)
 	defer s.hub.Unregister(cl)
 
