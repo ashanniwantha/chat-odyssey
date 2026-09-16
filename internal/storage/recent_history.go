@@ -2,13 +2,11 @@ package storage
 
 import (
 	"sync"
-
-	"github.com/ashanniwantha/chat-odyssey/internal/chat"
 )
 
 type RecentChatHistory struct {
 	mu      sync.Mutex
-	message []chat.BroadcastMessage
+	message [][]byte
 	size    int
 	head    int
 	tail    int
@@ -17,13 +15,13 @@ type RecentChatHistory struct {
 
 func NewRecentChatHistory(capacity int) *RecentChatHistory {
 	return &RecentChatHistory{
-		message: make([]chat.BroadcastMessage, capacity),
+		message: make([][]byte, capacity),
 		size:    capacity,
 	}
 }
 
 // Add inserts a new message, override the oldest if the buffer is full
-func (h *RecentChatHistory) Add(msg chat.BroadcastMessage) {
+func (h *RecentChatHistory) Add(msg []byte) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
@@ -38,11 +36,11 @@ func (h *RecentChatHistory) Add(msg chat.BroadcastMessage) {
 }
 
 // GetAll returns all messages in chronological order
-func (h *RecentChatHistory) GetAll() []chat.BroadcastMessage {
+func (h *RecentChatHistory) GetAll() [][]byte {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	var history []chat.BroadcastMessage
+	var history [][]byte
 	if !h.isFull {
 		history = append(history, h.message[:h.tail]...)
 	} else {

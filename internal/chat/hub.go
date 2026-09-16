@@ -4,20 +4,17 @@ import (
 	"context"
 
 	"github.com/ashanniwantha/chat-odyssey/internal/chatpb"
+	"github.com/ashanniwantha/chat-odyssey/internal/storage"
 	"github.com/coder/websocket"
 	"google.golang.org/protobuf/proto"
 )
-
-type BroadcastMessage struct {
-	Sender  *Client
-	Content []byte
-}
 
 type Hub struct {
 	clients    map[*Client]struct{}
 	register   chan *Client
 	unregister chan *Client
 	broadcast  chan BroadcastMessage
+	history    *storage.RecentChatHistory
 }
 
 func NewHub() *Hub {
@@ -26,6 +23,7 @@ func NewHub() *Hub {
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		broadcast:  make(chan BroadcastMessage),
+		history:    storage.NewRecentChatHistory(20),
 	}
 }
 
@@ -61,6 +59,9 @@ func (h *Hub) Run(ctx context.Context) {
 			if err != nil {
 				continue // Skip bad payload
 			}
+
+			// Save the binary payload in history ring buffer
+			h.history.Add(formattedMsg)
 
 			for c := range h.clients {
 				// prevent the message being sent to the sender
